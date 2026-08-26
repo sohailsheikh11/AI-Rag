@@ -1,9 +1,11 @@
 import express from 'express'
-import { getConversation, saveConversation } from '../controllers/conversation.controller.js';
+import { deleteConversation, getAllConversation, getConversation, saveConversation } from '../controllers/conversation.controller.js';
 
 const router = express.Router();
 
 router.post("/", saveConversation);
-router.get("/", getConversation)
+router.get("/:id", getConversation)
+router.get("/", getAllConversation);
+router.delete("/:conversationId", deleteConversation);
 
 export default router;

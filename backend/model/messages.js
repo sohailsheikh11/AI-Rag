@@ -10,10 +10,10 @@ const messageSchema = new mongoose.Schema({
     },
     role: {
         type: String, 
-        enum: ["user", "assistant"],
+        enum: ["user", "ai"],
         required: true
     },
-    content: {
+    text: {
         type: String, 
         required: true
     }
@@ -23,4 +23,4 @@ const messageSchema = new mongoose.Schema({
     timestamps: true
 })
 
-export default mongoose.model("Message", messageSchema);
+export const Message = mongoose.model("Message", messageSchema);

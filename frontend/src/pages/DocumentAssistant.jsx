@@ -11,6 +11,8 @@ import {
   X,
 } from "lucide-react";
 import Sidebar from "../component/sidebar";
+import ReactMarkdown from "react-markdown";
+import { getAllConversations } from "../utils/url";
 
 // ---- design tokens ----
 // bg:      #F6F4EF  (paper)
@@ -41,6 +43,7 @@ const ENDPOINTS = {
   general: `${API_BASE}/api/chat/general`,
   document: `${API_BASE}/api/chat/document`,
   upload: `${API_BASE}/api/documents/upload`,
+  delete: `${API_BASE}/api/conversations`
 };
 
 // Streams an SSE (text/event-stream) POST response, calling onToken for each
@@ -67,16 +70,23 @@ async function streamChat(url, body, onToken, onDone, onError) {
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
 
-      const events = buffer.split("\n\n");
-      buffer = events.pop(); // keep last incomplete chunk
+      console.log("this is the buffer", buffer);
 
+      
+
+      const events = buffer.split("\n\n");
+
+      console.log("these are the events before processing", events);
+      buffer = events.pop(); // keep last incomplete chunk
+         
+      console.log("this is the incomplete buffer", buffer);
       for (const evt of events) {
         const line = evt.split("\n").find((l) => l.startsWith("data:"));
         if (!line) continue;
-        const data = line.slice(5);
+         const data = line.slice(5).replace(/\\n/g, "\n");
 
-        console.log(JSON.stringify(data));
-        if (data === " [DONE]" || data ==="[DONE]") continue;
+        console.log("this is the string data",JSON.stringify(data));
+        if (data.trim() === "[DONE]") continue;
         onToken(data);
       }
     }
@@ -88,7 +98,7 @@ async function streamChat(url, body, onToken, onDone, onError) {
 
 export default function DocumentAssistant() {
   const [docs, setDocs] = useState(initialDocs);
-  const [mode, setMode] = useState("document"); // "general" | "document"
+  const [mode, setMode] = useState("general"); // "general" | "document"
   const [messages, setMessages] = useState(initialMessages);
   const [input, setInput] = useState("");
   const [dragOver, setDragOver] = useState(false);
@@ -100,30 +110,20 @@ export default function DocumentAssistant() {
   { id: "c1", title: "Resume feedback", updatedAt: "2h ago" },
   { id: "c2", title: "Contract clause review", updatedAt: "Yesterday" },
 ]);
- const [activeConversationId, setActiveConversationId] = useState("c1");
+ const [activeConversationId, setActiveConversationId] = useState(null);
 
  async function newConversation() {
-   const id = crypto.randomUUID();
 
-   const res = await fetch(`${API_BASE}/api/conversations`,{
-    method: "POST",
-    "Content-type": "application/json"
-   });
-
-   const data = await res.json();
-
-   console.log("this is the data", data);
-
-
-  setConversations((prev) => [data, ...prev]);
-  setActiveConversationId(id);
+  console.log("new conversation");
+   
+  setActiveConversationId(null);
    setMessages([]); // clear chat pane
  }
 
  //initialize the conversation data
 
- useEffect(() => {
-  async function fetchConversation() {
+ useEffect(  () => {
+  /* async function fetchConversation() {
     try {
       const response = await fetch(`${API_BASE}/api/conversations`);
     const data = await response.json();
@@ -135,10 +135,17 @@ export default function DocumentAssistant() {
 
       console.log("this is the error", error)
       
-    }
-  }
-
-  fetchConversation();
+    } */
+   getAllConversations(API_BASE)
+    .then((data) => {
+      console.log("this is the returned data", data);
+      setConversations(data);
+    })
+    .catch((error) => {
+      console.log("this is the error", error);
+    });
+   
+  
 }, []);
 
  function onSelectConversation(id) {
@@ -233,7 +240,9 @@ export default function DocumentAssistant() {
 
     getAllDocs();
 
-  },[])
+    console.log(activeConversationId);
+
+  },[activeConversationId])
 
   const selectedCount = docs.filter((d) => d.selected).length;
 
@@ -256,9 +265,31 @@ export default function DocumentAssistant() {
     }
   }
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     const text = input.trim();
     if (!text || streaming) return;
+
+    let convId = activeConversationId;
+
+    if(activeConversationId == null){
+      const res = await fetch("http://localhost:8080/api/conversations",{
+        method: "POST",
+        headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({title: text})
+      })
+
+      const data = await res.json();
+
+      convId = data.id;
+
+      
+      setActiveConversationId(data.id);
+      const conversations = await getAllConversations(API_BASE);
+  setConversations(conversations);
+      
+    }
 
     if (mode === "document" && selectedCount === 0) {
       setMessages((m) => [
@@ -279,8 +310,10 @@ export default function DocumentAssistant() {
     const url = mode === "document" ? ENDPOINTS.document : ENDPOINTS.general;
     const body =
       mode === "document"
-        ? { message: text, documentIds: docs.filter((d) => d.selected).map((d) => d.id) }
-        : { message: text };
+        ? { message: text, documentIds: docs.filter((d) => d.selected).map((d) => d.id), conversationId: convId }
+        : { message: text, conversationId: convId };
+
+        
 
     streamChat(
       url,
@@ -309,6 +342,26 @@ export default function DocumentAssistant() {
     }
   };
 
+  //deleting the conversation
+
+  async function deleteConversation(id){
+
+    const res = await fetch(`${ENDPOINTS.delete}/${id}`,{
+      method: "DELETE"
+    })
+
+    setConversations(prev=>{
+
+      return prev.filter( conversation=> conversation._id !== id);
+    })
+
+    if(activeConversationId === id){
+
+      setActiveConversationId(null);
+      setMessages([]);
+      }
+  }
+
   return (
     <div
       className="flex h-dvh w-full overflow-hidden rounded-xl border"
@@ -330,6 +383,8 @@ export default function DocumentAssistant() {
   setActiveConversationId={setActiveConversationId}
   onNewConversation={newConversation}
   onSelectConversation={onSelectConversation}
+  setMessages={setMessages}
+  onDeleteConversation={deleteConversation}
 />
       {/* CHAT PANEL */}
       <main className="flex flex-1 flex-col" style={{ background: "#F6F4EF" }}>
@@ -383,7 +438,9 @@ export default function DocumentAssistant() {
                       : { background: "#FFFFFF", color: "#21242E", border: "1px solid #E4E0D6" }
                   }
                 >
-                  {m.text}
+                  <ReactMarkdown>
+  {m.text}
+</ReactMarkdown>
                 </div>
               </div>
             ))}

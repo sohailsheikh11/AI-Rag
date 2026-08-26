@@ -2,6 +2,8 @@ import { embedOne } from "../services/embedding.service.js";
 import { streamGeneralChat, streamDocumentChat } from "../services/llm.service.js";
 import * as vectorStore from "../services/vectorStore.service.js";
 import Document from "../model/document.js";
+import { Message } from "../model/messages.js";
+import Conversation from "../model/conversations.js";
 
 function initSSE(res) {
   res.writeHead(200, {
@@ -24,12 +26,50 @@ function sendDone(res) {
 }
 
 export async function generalChat(req, res) {
-  const { message } = req.body;
+  const { message, conversationId } = req.body;
+
+  
   if (!message) return res.status(400).json({ error: "message is required" });
 
   initSSE(res);
   try {
-    await streamGeneralChat(message, (token) => sendToken(res, token));
+
+    await Message.create({
+    conversationId: conversationId,
+    text: message,
+    role: "user"
+   })
+
+   
+
+   let fullAnswer = "";
+
+   const messages = await Message.find({ conversationId })
+  .sort({ createdAt: -1 })
+  .limit(10)
+  .lean();
+
+messages.reverse();
+
+let conversationContext = "";
+
+for (const message of messages) {
+  conversationContext += `${message.role}: ${message.text}\n`;
+}
+
+
+
+    await streamGeneralChat(conversationContext, (token) => {
+      fullAnswer += token;
+      sendToken(res, token)
+    });
+
+    await Message.create({
+  conversationId: conversationId,
+  text: fullAnswer,
+  role: "ai"
+});
+
     sendDone(res);
   } catch (err) {
     console.error("General chat error:", err);
@@ -39,7 +79,7 @@ export async function generalChat(req, res) {
 }
 
 export async function documentChat(req, res) {
-  const { message, documentIds } = req.body;
+  const { message, documentIds, conversationId } = req.body;
 
   console.log(message);
   if (!message) return res.status(400).json({ error: "message is required" });
@@ -86,9 +126,52 @@ console.log(contextChunks.length);
       return;
     }
 
-    console.log("request is here");
+    const messages = await Message.find({ conversationId })
+  .sort({ createdAt: -1 })
+  .limit(10)
+  .lean();
 
-    await streamDocumentChat(message, contextChunks, (token) => sendToken(res, token));
+messages.reverse();
+
+let conversationContext = "";
+
+for (const message of messages) {
+  conversationContext += `${message.role}: ${message.text}\n`;
+}
+
+
+    let fullAnswer = "";
+
+    await streamDocumentChat(conversationContext, contextChunks, (token) => {
+    fullAnswer += token;
+    sendToken(res, token);
+  });
+
+  let conversation;
+
+if (!conversationId) {
+  conversation = await Conversation.create({
+    title: message.slice(0, 50),
+    documentIds,
+  });
+} else {
+  conversation = await Conversation.findById(conversationId);
+}
+
+console.log(conversation);
+
+await Message.create({
+  conversationId: conversation._id,
+  role: "user",
+  text: message
+})
+
+  await Message.create({
+  conversationId: conversation._id,
+  role: "ai",
+  text: fullAnswer,
+});
+
     sendDone(res);
   } catch (err) {
     console.error("Document chat error:", err);

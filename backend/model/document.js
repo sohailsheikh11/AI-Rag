@@ -2,29 +2,26 @@ import mongoose from "mongoose";
 
 const documentSchema = new mongoose.Schema(
   {
-    documentId: {
-      type: String,
-      required: true,
-    },
-    fileHash:{
-      type: String, 
-      required: true
-    },
-    content: {
+    filename: {
       type: String,
       required: true,
     },
 
-    embedding: {
-      type: [Number],
+    fileHash: {
+      type: String,
       required: true,
+      unique: true,
     },
 
-    metadata: {
-      source: String,
-      filename: String,
-      page: Number,
-      chunkIndex: Number,
+    status: {
+      type: String,
+      enum: ["processing", "completed", "failed"],
+      default: "processing",
+    },
+
+    error: {
+      type: String,
+      default: null,
     },
   },
   {
@@ -32,7 +29,6 @@ const documentSchema = new mongoose.Schema(
   }
 );
 
-documentSchema.index({fileHash: 1})
 
 const Document = mongoose.model("Document", documentSchema);
 

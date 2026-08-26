@@ -1,4 +1,6 @@
 import { BookOpen, Upload, FileText, Trash2, MessageSquare, Plus, History, X } from "lucide-react";
+import { useEffect } from "react";
+
 
 // ── Add to component state ──
 // const [conversations, setConversations] = useState([
@@ -17,8 +19,29 @@ import { BookOpen, Upload, FileText, Trash2, MessageSquare, Plus, History, X } f
 export default function Sidebar({
   docs, selectedCount, dragOver, setDragOver, addFiles, toggleDoc, removeDoc,
   mode, setMode,
-  conversations, activeConversationId, setActiveConversationId, onNewConversation, onSelectConversation,
+  conversations, onNewConversation, activeConversationId, setActiveConversationId, onSelectConversation,setMessages, onDeleteConversation
 }) {
+
+   async function getConversations(id){
+    const res= await fetch(`http://localhost:8080/api/conversations/${id}`);
+
+    console.log(id)
+
+    const data = await res.json();
+
+    console.log(data);
+
+    setMessages(data);
+
+
+
+
+  }
+
+  
+
+
+   
   return (
     <aside
       className="flex w-72 shrink-0 flex-col"
@@ -157,7 +180,7 @@ export default function Sidebar({
         style={{ background: c._id === activeConversationId ? "#2A2E3B" : "transparent" }}
       >
         <button
-          onClick={() => setActiveConversationId(c._id)}
+          onClick={() => {setActiveConversationId(c._id); getConversations(c._id)}}
           className="flex min-w-0 flex-1 flex-col items-start gap-0.5 px-2.5 py-2 text-left"
         >
           <span

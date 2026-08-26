@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Paperclip, X, FileText, Loader2, Bot, User } from "lucide-react";
+import { Send, Paperclip, X, FileText, Loader2, Bot, User } from "lucide-react"
+import ReactMarkdown from "react-markdown";
 
 // ── CONFIG: point these at your Spring Boot backend ──
 const API_BASE = "http://localhost:8080";

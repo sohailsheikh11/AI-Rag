@@ -10,8 +10,15 @@ async function streamGenerate(systemInstruction, message, onToken) {
     config: { systemInstruction },
   });
 
+  
+
   for await (const chunk of stream) {
-    if (chunk.text) onToken(chunk.text);
+    
+    if (chunk.text) {
+      
+
+      onToken(chunk.text);
+    }
   }
 }
 
