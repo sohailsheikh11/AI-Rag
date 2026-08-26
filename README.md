@@ -41,3 +41,32 @@ Node.js / Express API
              |
              +--> Store chunks
 ```
+
+Add your technology stack
+
+```markdown
+## Tech Stack
+
+### Frontend
+- React
+- Next.js
+- Tailwind CSS
+
+### Backend
+- Node.js
+- Express.js
+- MongoDB
+- Mongoose
+
+### AI / RAG
+- Gemini
+- Embeddings
+- Vector Search
+
+### Background Processing
+- Redis
+- BullMQ
+
+### Storage
+- MongoDB
+- Local file storage
