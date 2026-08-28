@@ -42,7 +42,6 @@ Node.js / Express API
              +--> Store chunks
 ```
 
-Add your technology stack
 
 ```markdown
 ## Tech Stack
