@@ -82,13 +82,14 @@ Make sure the following are installed on your system:
 * MongoDB
 * Redis
 * Git
+```
 
 ### 1. Clone the Repository
 
 ```bash
 git clone <your-repository-url>
 cd AI-Rag
-```
+
 
 ### 2. Backend Setup
 
