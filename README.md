@@ -83,6 +83,31 @@ Make sure the following are installed on your system:
 * Git
 ```
 
+## API Endpoints
+
+### Documents
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/documents/upload` | Upload and process a PDF |
+| GET | `/api/documents` | Get uploaded documents |
+| DELETE | `/api/documents/:id` | Delete a document |
+
+### Conversations
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/conversations` | Create a conversation |
+| GET | `/api/conversations` | Get all conversations |
+| DELETE | `/api/conversations/:id` | Delete a conversation |
+
+### Chat
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/chat` | Send a chat message |
+| POST | `/api/chat/document` | Chat with selected documents |
+
 ### 1. Clone the Repository
 
 ```bash
