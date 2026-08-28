@@ -203,8 +203,8 @@ Backend API
 
 Upload a PDF from the frontend to verify that document processing is working correctly.
 
-```screenshots
+
 <img width="1240" height="886" alt="image" src="https://github.com/user-attachments/assets/2a699afd-fecc-4671-8dbe-291f71f3e82b" />
-```
+
 
 
