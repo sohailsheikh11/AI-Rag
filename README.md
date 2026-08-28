@@ -89,7 +89,7 @@ Make sure the following are installed on your system:
 ```bash
 git clone <your-repository-url>
 cd AI-Rag
-
+```
 
 ### 2. Backend Setup
 
